@@ -8,6 +8,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "node --loader ts-node/esm src/example-client.ts",
     "ts:build": "tsc",
     "test": "vitest",
     "lint": "oxlint",
@@ -20,6 +21,7 @@
     "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
     "typescript": "^6.0.2",
+    "ts-node": "^10.9.2",
     "vitest": "^4.1.2"
   }
 }
