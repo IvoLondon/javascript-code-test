@@ -1,0 +1,25 @@
+{
+  "name": "javascript-code-test",
+  "version": "1.0.0",
+  "description": "Javascript Code Test",
+  "license": "MIT",
+  "author": "Ivo Iliev <ivo.iliev@vodafone.com>",
+  "repository": "git@github.com:IvoLondon/javascript-code-test.git",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "ts:build": "tsc",
+    "test": "vitest",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

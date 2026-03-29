@@ -12,7 +12,7 @@ BookSearchApiClient.prototype.getBooksByAuthor = function (authorName, limit) {
       "&limit=" +
       limit +
       "&format=" +
-      this.format
+      this.format,
   );
 
   xhr.onload = function () {
