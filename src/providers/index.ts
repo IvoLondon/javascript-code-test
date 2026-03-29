@@ -1,7 +1,8 @@
 import GoogleBooksAPI from "./GoogleBooksAPI";
+import config from "../config";
 
-export const getProvider = (providerName: string) => {
-  const provider = providerName;
+export const getProvider = (providerName?: string) => {
+  const provider = providerName ?? config.defaultProvider;
 
   switch (provider) {
     case "googleBooks":

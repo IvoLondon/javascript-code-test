@@ -6,9 +6,9 @@
   "author": "Ivo Iliev <ivo.iliev@vodafone.com>",
   "repository": "git@github.com:IvoLondon/javascript-code-test.git",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "node --loader ts-node/esm src/example-client.ts",
+    "dev": "tsx watch src/server.ts",
     "ts:build": "tsc",
     "test": "vitest",
     "lint": "oxlint",
@@ -17,11 +17,23 @@
     "fmt:check": "oxfmt --check"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^25.5.0",
+    "@types/supertest": "^7.2.0",
     "oxfmt": "^0.42.0",
     "oxlint": "^1.57.0",
-    "ts-node": "^10.9.2",
+    "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1"
   }
 }

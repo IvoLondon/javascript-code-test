@@ -6,8 +6,13 @@ export interface Book {
   price: number;
 }
 
+export interface BookResponse {
+  totalItems: number;
+  items: Book[];
+}
+
 export interface BookProvider {
-  getBooksByAuthor(authorName: string, limit: number): Promise<Book[]>;
-  getBooksByPublisher(authorName: string, limit: number): Promise<Book[]>;
-  formatResponse(response: Response): Promise<Book[]>;
+  getBooksByAuthor(authorName: string, limit: number): Promise<BookResponse>;
+  getBooksByPublisher(authorName: string, limit: number): Promise<BookResponse>;
+  formatResponse(response: Response): Promise<BookResponse>;
 }

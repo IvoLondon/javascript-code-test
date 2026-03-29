@@ -14,31 +14,34 @@ export default class GoogleBooksAPIProvider implements BookProvider {
   async getBooksByAuthor(authorName: string, limit: number) {
     try {
       const response = await fetch(
-        `${this.baseUrl}?q=+inauthor:${authorName}&fields=${volumeFields}&maxResults=${limit}`,
+        `${this.baseUrl}?q=+inauthor:${encodeURIComponent(authorName)}&fields=${volumeFields}&maxResults=${limit}`,
       );
 
       return this.formatResponse(response);
     } catch (error) {
-      console.error(error);
-      return [];
+      console.error(`getBooksByAuthor error: ${(error as Error).message}`);
+      throw error;
     }
   }
 
   async getBooksByPublisher(publisherName: string, limit: number) {
     try {
       const response = await fetch(
-        `${this.baseUrl}?q=+inpublisher:${publisherName}&fields=${volumeFields}&maxResults=${limit}`,
+        `${this.baseUrl}?q=+inpublisher:${encodeURIComponent(publisherName)}&fields=${volumeFields}&maxResults=${limit}`,
       );
 
       return this.formatResponse(response);
     } catch (error) {
-      console.error(error);
-      return [];
+      console.error(`getBooksByPublisher error: ${(error as Error).message}`);
+      throw error;
     }
   }
 
   async formatResponse(data: Response) {
-    let result: Book[] = [];
+    let result: { totalItems: number; items: Book[] } = {
+      totalItems: 0,
+      items: [],
+    };
 
     if (data.status !== 200) {
       throw new Error(`Request failed.  Returned status of ${data.status}`);
@@ -47,7 +50,7 @@ export default class GoogleBooksAPIProvider implements BookProvider {
     const books = await data.json();
 
     if (this.format === "json") {
-      result = books.items.map((item: any) => ({
+      result.items = books.items.map((item: any) => ({
         title: item.volumeInfo.title,
         author: item.volumeInfo.authors?.join(", "),
         isbn: item.volumeInfo.industryIdentifiers?.[0]?.identifier,
@@ -61,6 +64,9 @@ export default class GoogleBooksAPIProvider implements BookProvider {
       // TODO: Implement XML parsing
     }
 
-    return result;
+    return {
+      totalItems: books.totalItems || 0,
+      items: result.items || [],
+    };
   }
 }
