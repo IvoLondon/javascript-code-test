@@ -22,6 +22,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      DEFAULT_PROVIDER: googleBooks
+      SERVER_VERSION: ${{ secrets.SERVER_VERSION }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +39,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     needs: [lint, test]
+    env:
+      DEFAULT_PROVIDER: googleBooks
+      SERVER_VERSION: ${{ secrets.SERVER_VERSION }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
