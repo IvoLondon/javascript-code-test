@@ -27,9 +27,7 @@ function createApp() {
 function mockProvider(overrides: Partial<BookProvider> = {}): BookProvider {
   return {
     getBooksByAuthor: vi.fn().mockResolvedValue({ totalItems: 0, items: [] }),
-    getBooksByPublisher: vi
-      .fn()
-      .mockResolvedValue({ totalItems: 0, items: [] }),
+    getBooksByPublisher: vi.fn().mockResolvedValue({ totalItems: 0, items: [] }),
     formatResponse: vi.fn().mockResolvedValue({ totalItems: 0, items: [] }),
     ...overrides,
   };
@@ -78,18 +76,20 @@ describe("books router", () => {
       expect(res.body).toEqual({
         totalItems: 1,
         count: 1,
+        page: 1,
+        totalPages: 1,
         books,
         correlationId: "test-correlation-id",
       });
     });
 
-    it("passes the resolved limit to the provider (default 10)", async () => {
+    it("passes the resolved limit to the provider (default 10, startIndex 0)", async () => {
       const provider = mockProvider();
       mockGetProvider.mockReturnValue(provider);
 
       await request(app).get("/books/by-author?author=Tolkien");
 
-      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 10);
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 10, 0);
     });
 
     it("respects a custom limit", async () => {
@@ -98,7 +98,7 @@ describe("books router", () => {
 
       await request(app).get("/books/by-author?author=Tolkien&limit=5");
 
-      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 5);
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 5, 0);
     });
 
     it("caps limit at 40", async () => {
@@ -107,7 +107,7 @@ describe("books router", () => {
 
       await request(app).get("/books/by-author?author=Tolkien&limit=100");
 
-      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 40);
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 40, 0);
     });
 
     it("defaults non-numeric limit to 10", async () => {
@@ -116,7 +116,50 @@ describe("books router", () => {
 
       await request(app).get("/books/by-author?author=Tolkien&limit=abc");
 
-      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 10);
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 10, 0);
+    });
+
+    it("computes startIndex from page and limit", async () => {
+      const provider = mockProvider();
+      mockGetProvider.mockReturnValue(provider);
+
+      await request(app).get("/books/by-author?author=Tolkien&limit=5&page=3");
+
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 5, 10);
+    });
+
+    it("defaults page to 1 when omitted", async () => {
+      const provider = mockProvider();
+      mockGetProvider.mockReturnValue(provider);
+
+      await request(app).get("/books/by-author?author=Tolkien&limit=5");
+
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 5, 0);
+    });
+
+    it("clamps page to minimum of 1", async () => {
+      const provider = mockProvider();
+      mockGetProvider.mockReturnValue(provider);
+
+      await request(app).get("/books/by-author?author=Tolkien&page=0");
+
+      expect(provider.getBooksByAuthor).toHaveBeenCalledWith("Tolkien", 10, 0);
+    });
+
+    it("returns page and totalPages in the response", async () => {
+      const provider = mockProvider({
+        getBooksByAuthor: vi
+          .fn()
+          .mockResolvedValue({ totalItems: 25, items: Array(10).fill({}) }),
+      });
+      mockGetProvider.mockReturnValue(provider);
+
+      const res = await request(app).get(
+        "/books/by-author?author=Tolkien&limit=10&page=2",
+      );
+
+      expect(res.body.page).toBe(2);
+      expect(res.body.totalPages).toBe(3);
     });
 
     it("sets X-Provider header to the given providerName", async () => {
@@ -200,18 +243,20 @@ describe("books router", () => {
       expect(res.body).toEqual({
         totalItems: 1,
         count: 1,
+        page: 1,
+        totalPages: 1,
         books,
         correlationId: "test-correlation-id",
       });
     });
 
-    it("passes the resolved limit to the provider (default 10)", async () => {
+    it("passes the resolved limit to the provider (default 10, startIndex 0)", async () => {
       const provider = mockProvider();
       mockGetProvider.mockReturnValue(provider);
 
       await request(app).get("/books/by-publisher?publisher=Penguin");
 
-      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 10);
+      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 10, 0);
     });
 
     it("respects a custom limit", async () => {
@@ -220,7 +265,7 @@ describe("books router", () => {
 
       await request(app).get("/books/by-publisher?publisher=Penguin&limit=3");
 
-      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 3);
+      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 3, 0);
     });
 
     it("caps limit at 40", async () => {
@@ -229,7 +274,7 @@ describe("books router", () => {
 
       await request(app).get("/books/by-publisher?publisher=Penguin&limit=999");
 
-      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 40);
+      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 40, 0);
     });
 
     it("defaults non-numeric limit to 10", async () => {
@@ -238,7 +283,32 @@ describe("books router", () => {
 
       await request(app).get("/books/by-publisher?publisher=Penguin&limit=xyz");
 
-      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 10);
+      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 10, 0);
+    });
+
+    it("computes startIndex from page and limit", async () => {
+      const provider = mockProvider();
+      mockGetProvider.mockReturnValue(provider);
+
+      await request(app).get("/books/by-publisher?publisher=Penguin&limit=5&page=4");
+
+      expect(provider.getBooksByPublisher).toHaveBeenCalledWith("Penguin", 5, 15);
+    });
+
+    it("returns page and totalPages in the response", async () => {
+      const provider = mockProvider({
+        getBooksByPublisher: vi
+          .fn()
+          .mockResolvedValue({ totalItems: 42, items: Array(10).fill({}) }),
+      });
+      mockGetProvider.mockReturnValue(provider);
+
+      const res = await request(app).get(
+        "/books/by-publisher?publisher=Penguin&limit=10&page=3",
+      );
+
+      expect(res.body.page).toBe(3);
+      expect(res.body.totalPages).toBe(5);
     });
 
     it("sets X-Provider header to the given providerName", async () => {

@@ -105,12 +105,13 @@ describe("GoogleBooksAPI", () => {
       vi.stubGlobal("fetch", fetchMock);
 
       const provider = new GoogleBooksAPI();
-      const res = await provider.getBooksByAuthor("Jane Doe", 5);
+      const res = await provider.getBooksByAuthor("Jane Doe", 5, 10);
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const url = String(fetchMock.mock.calls[0][0]);
       expect(url).toContain("inauthor:Jane%20Doe");
       expect(url).toContain("maxResults=5");
+      expect(url).toContain("startIndex=10");
       expect(typeof res).not.toBe("string");
       const json = res as { totalItems: number; items: { title: string }[] };
       expect(json.items).toHaveLength(1);
@@ -124,7 +125,7 @@ describe("GoogleBooksAPI", () => {
       vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
 
       const provider = new GoogleBooksAPI();
-      await expect(provider.getBooksByAuthor("any", 1)).rejects.toThrow(
+      await expect(provider.getBooksByAuthor("any", 1, 0)).rejects.toThrow(
         "network",
       );
       consoleSpy.mockRestore();
@@ -141,11 +142,12 @@ describe("GoogleBooksAPI", () => {
       vi.stubGlobal("fetch", fetchMock);
 
       const provider = new GoogleBooksAPI();
-      await provider.getBooksByPublisher("Penguin", 3);
+      await provider.getBooksByPublisher("Penguin", 3, 6);
 
       const url = String(fetchMock.mock.calls[0][0]);
       expect(url).toContain("inpublisher:Penguin");
       expect(url).toContain("maxResults=3");
+      expect(url).toContain("startIndex=6");
     });
   });
 });

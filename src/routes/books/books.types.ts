@@ -1,6 +1,7 @@
 interface BooksByAuthorQuery {
   author?: string;
   limit?: string;
+  page?: string;
   providerName?: string;
   format?: string;
 }
@@ -8,6 +9,7 @@ interface BooksByAuthorQuery {
 interface BooksByPublisherQuery {
   publisher?: string;
   limit?: string;
+  page?: string;
   providerName?: string;
   format?: string;
 }

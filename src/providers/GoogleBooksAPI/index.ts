@@ -13,10 +13,10 @@ export default class GoogleBooksAPIProvider implements BookProvider {
     this.format = format;
   }
 
-  async getBooksByAuthor(authorName: string, limit: number) {
+  async getBooksByAuthor(authorName: string, limit: number, startIndex: number) {
     try {
       const response = await fetch(
-        `${this.baseUrl}?q=+inauthor:${encodeURIComponent(authorName)}&fields=${volumeFields}&maxResults=${limit}&key=${config.googleApiKey}`,
+        `${this.baseUrl}?q=+inauthor:${encodeURIComponent(authorName)}&fields=${volumeFields}&maxResults=${limit}&startIndex=${startIndex}&key=${config.googleApiKey}`,
       );
 
       return this.formatResponse(response);
@@ -26,10 +26,10 @@ export default class GoogleBooksAPIProvider implements BookProvider {
     }
   }
 
-  async getBooksByPublisher(publisherName: string, limit: number) {
+  async getBooksByPublisher(publisherName: string, limit: number, startIndex: number) {
     try {
       const response = await fetch(
-        `${this.baseUrl}?q=+inpublisher:${encodeURIComponent(publisherName)}&fields=${volumeFields}&maxResults=${limit}&key=${config.googleApiKey}`,
+        `${this.baseUrl}?q=+inpublisher:${encodeURIComponent(publisherName)}&fields=${volumeFields}&maxResults=${limit}&startIndex=${startIndex}&key=${config.googleApiKey}`,
       );
 
       return this.formatResponse(response);

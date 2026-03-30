@@ -44,7 +44,12 @@ const router = Router();
  *         name: limit
  *         schema:
  *           type: string
- *         description: Max results (default 10, capped at 40)
+ *         description: Max results per page (default 10, capped at 40)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *         description: Page number (default 1, minimum 1)
  *       - in: query
  *         name: providerName
  *         schema:
@@ -68,6 +73,10 @@ const router = Router();
  *                   type: number
  *                 count:
  *                   type: number
+ *                 page:
+ *                   type: number
+ *                 totalPages:
+ *                   type: number
  *                 books:
  *                   type: array
  *                   items:
@@ -82,7 +91,7 @@ const router = Router();
 router.get(
   "/by-author",
   async (req: Request<{}, {}, {}, BooksByAuthorQuery>, res: Response) => {
-    const { author, limit, providerName, format } = req.query;
+    const { author, limit, page, providerName, format } = req.query;
 
     if (!author) {
       res.status(400).json({ error: "Query parameter 'author' is required" });
@@ -90,11 +99,13 @@ router.get(
     }
 
     const maxResults = Math.min(Number(limit) || 10, 40);
+    const currentPage = Math.max(Math.floor(Number(page)) || 1, 1);
+    const startIndex = (currentPage - 1) * maxResults;
     const resolvedFormat: ResponseFormat = format === "xml" ? "xml" : "json";
     const provider = getProvider(providerName, resolvedFormat);
     res.setHeader("X-Provider", providerName || "default");
     try {
-      const result = await provider.getBooksByAuthor(author, maxResults);
+      const result = await provider.getBooksByAuthor(author, maxResults, startIndex);
 
       if (typeof result === "string") {
         res.type("application/xml").send(result);
@@ -102,6 +113,8 @@ router.get(
         res.json({
           totalItems: result.totalItems,
           count: result.items.length,
+          page: currentPage,
+          totalPages: Math.ceil(result.totalItems / maxResults),
           books: result.items,
           correlationId: req.correlationId,
         });
@@ -135,7 +148,12 @@ router.get(
  *         name: limit
  *         schema:
  *           type: string
- *         description: Max results (default 10, capped at 40)
+ *         description: Max results per page (default 10, capped at 40)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: string
+ *         description: Page number (default 1, minimum 1)
  *       - in: query
  *         name: providerName
  *         schema:
@@ -159,6 +177,10 @@ router.get(
  *                   type: number
  *                 count:
  *                   type: number
+ *                 page:
+ *                   type: number
+ *                 totalPages:
+ *                   type: number
  *                 books:
  *                   type: array
  *                   items:
@@ -173,7 +195,7 @@ router.get(
 router.get(
   "/by-publisher",
   async (req: Request<{}, {}, {}, BooksByPublisherQuery>, res: Response) => {
-    const { publisher, limit, providerName, format } = req.query;
+    const { publisher, limit, page, providerName, format } = req.query;
 
     if (!publisher) {
       res
@@ -183,12 +205,14 @@ router.get(
     }
 
     const maxResults = Math.min(Number(limit) || 10, 40);
+    const currentPage = Math.max(Math.floor(Number(page)) || 1, 1);
+    const startIndex = (currentPage - 1) * maxResults;
     const resolvedFormat: ResponseFormat = format === "xml" ? "xml" : "json";
     const provider = getProvider(providerName, resolvedFormat);
     res.setHeader("X-Provider", providerName || "default");
 
     try {
-      const result = await provider.getBooksByPublisher(publisher, maxResults);
+      const result = await provider.getBooksByPublisher(publisher, maxResults, startIndex);
 
       if (typeof result === "string") {
         res.type("application/xml").send(result);
@@ -196,6 +220,8 @@ router.get(
         res.json({
           totalItems: result.totalItems,
           count: result.items.length,
+          page: currentPage,
+          totalPages: Math.ceil(result.totalItems / maxResults),
           books: result.items,
           correlationId: req.correlationId,
         });

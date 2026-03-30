@@ -17,10 +17,12 @@ export interface BookProvider {
   getBooksByAuthor(
     authorName: string,
     limit: number,
+    startIndex: number,
   ): Promise<BookResponse | string>;
   getBooksByPublisher(
-    authorName: string,
+    publisherName: string,
     limit: number,
+    startIndex: number,
   ): Promise<BookResponse | string>;
   formatResponse(response: Response): Promise<BookResponse | string>;
 }
