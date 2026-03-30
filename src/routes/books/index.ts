@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 
 import { getProvider } from "../../providers";
+import type { ResponseFormat } from "../../providers/providers.types";
 
 import { BooksByAuthorQuery, BooksByPublisherQuery } from "./books.types";
 
@@ -49,6 +50,12 @@ const router = Router();
  *         schema:
  *           type: string
  *         description: Book data provider (default from config)
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, xml]
+ *         description: Response format (default json)
  *     responses:
  *       200:
  *         description: List of books matching the author
@@ -75,7 +82,7 @@ const router = Router();
 router.get(
   "/by-author",
   async (req: Request<{}, {}, {}, BooksByAuthorQuery>, res: Response) => {
-    const { author, limit, providerName } = req.query;
+    const { author, limit, providerName, format } = req.query;
 
     if (!author) {
       res.status(400).json({ error: "Query parameter 'author' is required" });
@@ -83,20 +90,22 @@ router.get(
     }
 
     const maxResults = Math.min(Number(limit) || 10, 40);
-    const provider = getProvider(providerName);
+    const resolvedFormat: ResponseFormat = format === "xml" ? "xml" : "json";
+    const provider = getProvider(providerName, resolvedFormat);
     res.setHeader("X-Provider", providerName || "default");
     try {
-      const { totalItems, items } = await provider.getBooksByAuthor(
-        author,
-        maxResults,
-      );
+      const result = await provider.getBooksByAuthor(author, maxResults);
 
-      res.json({
-        totalItems,
-        count: items.length,
-        books: items,
-        correlationId: req.correlationId,
-      });
+      if (typeof result === "string") {
+        res.type("application/xml").send(result);
+      } else {
+        res.json({
+          totalItems: result.totalItems,
+          count: result.items.length,
+          books: result.items,
+          correlationId: req.correlationId,
+        });
+      }
     } catch (error) {
       console.error(
         `by-author error: ${(error as Error).message} - correlationId: ${req.correlationId}`,
@@ -132,6 +141,12 @@ router.get(
  *         schema:
  *           type: string
  *         description: Book data provider (default from config)
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, xml]
+ *         description: Response format (default json)
  *     responses:
  *       200:
  *         description: List of books matching the publisher
@@ -158,7 +173,7 @@ router.get(
 router.get(
   "/by-publisher",
   async (req: Request<{}, {}, {}, BooksByPublisherQuery>, res: Response) => {
-    const { publisher, limit, providerName } = req.query;
+    const { publisher, limit, providerName, format } = req.query;
 
     if (!publisher) {
       res
@@ -168,21 +183,23 @@ router.get(
     }
 
     const maxResults = Math.min(Number(limit) || 10, 40);
-    const provider = getProvider(providerName);
+    const resolvedFormat: ResponseFormat = format === "xml" ? "xml" : "json";
+    const provider = getProvider(providerName, resolvedFormat);
     res.setHeader("X-Provider", providerName || "default");
 
     try {
-      const { totalItems, items } = await provider.getBooksByPublisher(
-        publisher,
-        maxResults,
-      );
+      const result = await provider.getBooksByPublisher(publisher, maxResults);
 
-      res.json({
-        totalItems,
-        count: items.length,
-        books: items,
-        correlationId: req.correlationId,
-      });
+      if (typeof result === "string") {
+        res.type("application/xml").send(result);
+      } else {
+        res.json({
+          totalItems: result.totalItems,
+          count: result.items.length,
+          books: result.items,
+          correlationId: req.correlationId,
+        });
+      }
     } catch (error) {
       console.error(
         `by-publisher error: ${(error as Error).message} - correlationId: ${req.correlationId}`,

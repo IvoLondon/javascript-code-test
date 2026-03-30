@@ -12,4 +12,5 @@ export default {
   port: Number(process.env.PORT) || 3000,
   defaultProvider: required("DEFAULT_PROVIDER"),
   serverVersion: required("SERVER_VERSION"),
+  googleApiKey: required("GOOGLE_API_KEY"),
 } as const;

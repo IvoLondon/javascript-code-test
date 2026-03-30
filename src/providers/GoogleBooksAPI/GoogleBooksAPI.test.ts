@@ -2,42 +2,47 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import GoogleBooksAPI from ".";
 
+const sampleApiBody = {
+  totalItems: 1,
+  items: [
+    {
+      volumeInfo: {
+        title: "Test Title",
+        authors: ["A", "B"],
+        industryIdentifiers: [{ type: "ISBN_13", identifier: "978123" }],
+      },
+      saleInfo: {
+        saleability: "FOR_SALE",
+        listPrice: { amount: 12.5 },
+      },
+    },
+  ],
+};
+
+const expectedBook = {
+  title: "Test Title",
+  author: "A, B",
+  isbn: "978123",
+  quantity: "Available",
+  price: 12.5,
+};
+
 describe("GoogleBooksAPI", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe("formatResponse", () => {
-    it("maps JSON items to Book fields", async () => {
+  describe("formatResponse (json)", () => {
+    it("returns a BookResponse object with mapped fields", async () => {
       const provider = new GoogleBooksAPI();
-      const body = {
-        items: [
-          {
-            volumeInfo: {
-              title: "Test Title",
-              authors: ["A", "B"],
-              industryIdentifiers: [{ type: "ISBN_13", identifier: "978123" }],
-            },
-            saleInfo: {
-              saleability: "FOR_SALE",
-              listPrice: { amount: 12.5 },
-            },
-          },
-        ],
-      };
-      const response = new Response(JSON.stringify(body), { status: 200 });
+      const response = new Response(JSON.stringify(sampleApiBody), {
+        status: 200,
+      });
 
       const result = await provider.formatResponse(response);
 
-      expect(result.items).toEqual([
-        {
-          title: "Test Title",
-          author: "A, B",
-          isbn: "978123",
-          quantity: "Available",
-          price: 12.5,
-        },
-      ]);
+      expect(typeof result).toBe("object");
+      expect(result).toEqual({ totalItems: 1, items: [expectedBook] });
     });
 
     it("throws when the response status is not 200", async () => {
@@ -46,6 +51,34 @@ describe("GoogleBooksAPI", () => {
 
       await expect(provider.formatResponse(response)).rejects.toThrow(
         "Request failed.  Returned status of 404",
+      );
+    });
+  });
+
+  describe("formatResponse (xml)", () => {
+    it("returns an XML string with book data", async () => {
+      const provider = new GoogleBooksAPI("xml");
+      const response = new Response(JSON.stringify(sampleApiBody), {
+        status: 200,
+      });
+
+      const result = await provider.formatResponse(response);
+
+      expect(typeof result).toBe("string");
+      expect(result).toContain("<response>");
+      expect(result).toContain("<totalItems>1</totalItems>");
+      expect(result).toContain("<count>1</count>");
+      expect(result).toContain("<title>Test Title</title>");
+      expect(result).toContain("<author>A, B</author>");
+      expect(result).toContain("<isbn>978123</isbn>");
+    });
+
+    it("throws when the response status is not 200", async () => {
+      const provider = new GoogleBooksAPI("xml");
+      const response = new Response("", { status: 500 });
+
+      await expect(provider.formatResponse(response)).rejects.toThrow(
+        "Request failed.  Returned status of 500",
       );
     });
   });
@@ -78,8 +111,10 @@ describe("GoogleBooksAPI", () => {
       const url = String(fetchMock.mock.calls[0][0]);
       expect(url).toContain("inauthor:Jane%20Doe");
       expect(url).toContain("maxResults=5");
-      expect(res.items).toHaveLength(1);
-      expect(res.items[0].title).toBe("Book");
+      expect(typeof res).not.toBe("string");
+      const json = res as { totalItems: number; items: { title: string }[] };
+      expect(json.items).toHaveLength(1);
+      expect(json.items[0].title).toBe("Book");
     });
 
     it("throws when fetch throws", async () => {

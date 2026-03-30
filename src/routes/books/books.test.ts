@@ -147,7 +147,23 @@ describe("books router", () => {
         "/books/by-author?author=Tolkien&providerName=googleBooks",
       );
 
-      expect(mockGetProvider).toHaveBeenCalledWith("googleBooks");
+      expect(mockGetProvider).toHaveBeenCalledWith("googleBooks", "json");
+    });
+
+    it("returns XML when the provider returns a string", async () => {
+      const xmlBody = "<response><totalItems>1</totalItems></response>";
+      const provider = mockProvider({
+        getBooksByAuthor: vi.fn().mockResolvedValue(xmlBody),
+      });
+      mockGetProvider.mockReturnValue(provider);
+
+      const res = await request(app).get(
+        "/books/by-author?author=Tolkien&format=xml",
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.headers["content-type"]).toContain("application/xml");
+      expect(res.text).toBe(xmlBody);
     });
   });
 
@@ -255,7 +271,23 @@ describe("books router", () => {
         "/books/by-publisher?publisher=Penguin&providerName=googleBooks",
       );
 
-      expect(mockGetProvider).toHaveBeenCalledWith("googleBooks");
+      expect(mockGetProvider).toHaveBeenCalledWith("googleBooks", "json");
+    });
+
+    it("returns XML when the provider returns a string", async () => {
+      const xmlBody = "<response><totalItems>1</totalItems></response>";
+      const provider = mockProvider({
+        getBooksByPublisher: vi.fn().mockResolvedValue(xmlBody),
+      });
+      mockGetProvider.mockReturnValue(provider);
+
+      const res = await request(app).get(
+        "/books/by-publisher?publisher=Packt&format=xml",
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.headers["content-type"]).toContain("application/xml");
+      expect(res.text).toBe(xmlBody);
     });
 
     it("returns 500 with error message when the provider throws", async () => {

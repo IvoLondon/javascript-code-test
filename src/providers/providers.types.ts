@@ -1,3 +1,5 @@
+export type ResponseFormat = "json" | "xml";
+
 export interface Book {
   title: string;
   author: string;
@@ -12,7 +14,13 @@ export interface BookResponse {
 }
 
 export interface BookProvider {
-  getBooksByAuthor(authorName: string, limit: number): Promise<BookResponse>;
-  getBooksByPublisher(authorName: string, limit: number): Promise<BookResponse>;
-  formatResponse(response: Response): Promise<BookResponse>;
+  getBooksByAuthor(
+    authorName: string,
+    limit: number,
+  ): Promise<BookResponse | string>;
+  getBooksByPublisher(
+    authorName: string,
+    limit: number,
+  ): Promise<BookResponse | string>;
+  formatResponse(response: Response): Promise<BookResponse | string>;
 }
